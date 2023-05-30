@@ -29,10 +29,17 @@ void* invader_behavior(void* arg) {
 int main() {
     // Initialize game state
     game.numInvaders = 10;
-    game.invaderPositions = malloc(game.numInvaders * sizeof(int));
+    game.invaderPositions = malloc(game.numInvaders * sizeof(InvaderPosition));
+
     game.shooterPosition = 5;
     game.score = 0;
     game.lives = 10;
+
+    // Initialize invaders positions
+    for (int i = 0; i < game.numInvaders; i++) {
+        game.invaderPositions[i].x = i;
+        game.invaderPositions[i].y = 0;  // Assuming 0 is the initial y-position for all invaders
+    }
 
     pthread_t *threads = malloc(game.numInvaders * sizeof(pthread_t));
     int i;
@@ -61,6 +68,5 @@ int main() {
     pthread_mutex_destroy(&lock);
     free(game.invaderPositions);
     free(threads);
-
     return 0;
 }

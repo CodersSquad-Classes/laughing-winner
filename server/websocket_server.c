@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "game_state.h"
 #include "game.h"
+#include <pthread.h>
+#include <stdlib.h>
 
 #define MAX_PAYLOAD_SIZE 4096
 
@@ -32,8 +34,19 @@ int callback_echo(struct lws *wsi, enum lws_callback_reasons reason, void *user,
                 if (game.shooterPosition < 9) {  // Assume game width is 10; adjust as necessary
                     game.shooterPosition++;
                 }
-            } else if (strcmp(message, "shoot") == 0) {
+            } else if (strcmp(command, "shoo") == 0) {
+                printf("Shoot\n");
                 // Shoot
+                for (int i = 0; i < game.numInvaders; i++) {
+                    // Check if the shot hits any invader
+                    if (game.invaderPositions[i].x == game.shooterPosition) {
+                        // If hit, remove this invader by marking it as inactive
+                        game.invaderPositions[i].x = -1;
+                        game.invaderPositions[i].y = -1;
+                        game.numInvaders--;
+                        break;
+                    }
+                }
             }
 
             pthread_mutex_unlock(&lock);
@@ -43,9 +56,20 @@ int callback_echo(struct lws *wsi, enum lws_callback_reasons reason, void *user,
         }
         case LWS_CALLBACK_SERVER_WRITEABLE: {
             // Convert game state to JSON string
-            char json[256]; // Adjust size as needed
-            //sprintf(json, "{\"numInvaders\": %d, \"invaderPositions\": [...], \"shooterPosition\": %d, \"score\": %d, \"lives\": %d}", game.numInvaders, game.shooterPosition, game.score, game.lives); // Replace [...] with actual invader positions
-            sprintf(json, "{\"numInvaders\": %d, \"invaderPositions\": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ], \"shooterPosition\": %d, \"score\": %d, \"lives\": %d}", game.numInvaders, game.shooterPosition, game.score, game.lives);
+            char json[512]; // Adjust size as needed. Made it larger to accommodate invader positions.
+            char invaderPositionsJson[256] = ""; // A buffer to hold the JSON array of invader positions. Adjust size as needed.
+
+            // Convert invader positions to JSON array
+            for (int i = 0; i < game.numInvaders; i++) {
+                char pos[64]; // Buffer for one position. Adjust size as needed.
+                sprintf(pos, "{\"x\": %d, \"y\": %d}", game.invaderPositions[i].x, game.invaderPositions[i].y);
+                strcat(invaderPositionsJson, pos);
+                if (i < game.numInvaders - 1) {
+                    strcat(invaderPositionsJson, ", "); // Add comma between elements, but not after last element
+                }
+            }
+
+            sprintf(json, "{\"numInvaders\": %d, \"invaderPositions\": [%s], \"shooterPosition\": %d, \"score\": %d, \"lives\": %d}", game.numInvaders, invaderPositionsJson, game.shooterPosition, game.score, game.lives);
 
             // Send game state
             memcpy(&payload.data[LWS_SEND_BUFFER_PRE_PADDING], json, strlen(json));
@@ -54,6 +78,7 @@ int callback_echo(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 
             break;
         }
+
         default:
             break;
     }

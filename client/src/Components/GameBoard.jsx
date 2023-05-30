@@ -25,7 +25,6 @@ function GameBoard() {
         socketRef.current.addEventListener('message', function (event) {
             console.log('Message from server: ', event.data);
             const gameState = JSON.parse(event.data);
-            console.log(gameState);
             setNumInvaders(gameState.numInvaders);
             setInvaderPositions(gameState.invaderPositions);
             setShooterPositionX(gameState.shooterPosition);
@@ -53,6 +52,10 @@ function GameBoard() {
                 case 'ArrowRight':
                     console.log("Sending right command to server");
                     socketRef.current.send('right');
+                    break;
+                case ' ':
+                    console.log("Sending shoot command to server");
+                    socketRef.current.send('shoot');
                     break;
             }
         };
