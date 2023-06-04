@@ -12,19 +12,23 @@ struct GameState game;
 pthread_mutex_t lock;
 
 void* invader_behavior(void* arg) {
-    // This is the function that will be executed by each invader thread.
-    // Each invader will act independently according to some pre-defined logic.
+    int invaderIndex = *(int*) arg; // Retrieve the invader index from the argument
 
-    // This is a simple example where the invader just moves down the board every second.
     while (1) {
         pthread_mutex_lock(&lock);
-        // update the invader's position in the game state
+
+        // Update the invader's position in the game state
+        // Example: Move the invader down the board by incrementing the y-coordinate
+        game.invaderPositions[invaderIndex].y++;
+
         pthread_mutex_unlock(&lock);
         sleep(1);
     }
 
     return NULL;
 }
+
+
 
 int main() {
     // Initialize game state

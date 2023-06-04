@@ -1,0 +1,36 @@
+.shooter {
+    /* Add your default styles for the shooter container */
+    position: relative;
+    width: 50px;
+    height: 50px;
+}
+
+.triangle {
+    /* Add your styles for the triangle shape */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-left: 25px solid transparent;
+    border-right: 25px solid transparent;
+    border-bottom: 50px solid blue;
+}
+
+.shooter.shooting .triangle {
+    /* Add animation styles for shooting */
+    animation: shootingAnimation 0.3s linear;
+}
+
+@keyframes shootingAnimation {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}

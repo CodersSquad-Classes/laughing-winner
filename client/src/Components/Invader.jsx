@@ -1,13 +1,23 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import '../Styles/Invader.css'; // Import your CSS file
 
 function Invader({ position, ...props }) {
-    // Render your invader here, based on the current state.
-    // You could pass other properties (like an "alive" flag) if needed.
+    const invaderStyle = {
+        gridColumn: position.x + 1, // CSS grid columns start at 1
+        gridRow: position.y + 1, // CSS grid rows start at 1
+    };
+
     return (
-        <div>
-            Invader
-        </div>
+        <div className="invader" style={invaderStyle} {...props}/>
     );
 }
+
+Invader.propTypes = {
+    position: PropTypes.shape({
+        x: PropTypes.number.isRequired,
+        y: PropTypes.number.isRequired,
+    }).isRequired,
+};
 
 export default Invader;

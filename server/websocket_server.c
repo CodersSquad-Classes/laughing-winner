@@ -35,19 +35,20 @@ int callback_echo(struct lws *wsi, enum lws_callback_reasons reason, void *user,
                     game.shooterPosition++;
                 }
             } else if (strcmp(command, "shoo") == 0) {
-                printf("Shoot\n");
-                // Shoot
-                for (int i = 0; i < game.numInvaders; i++) {
-                    // Check if the shot hits any invader
-                    if (game.invaderPositions[i].x == game.shooterPosition) {
-                        // If hit, remove this invader by marking it as inactive
-                        game.invaderPositions[i].x = -1;
-                        game.invaderPositions[i].y = -1;
-                        game.numInvaders--;
-                        break;
-                    }
+        printf("Shoot\n");
+        // Shoot
+        for (int i = 0; i < game.numInvaders; i++) {
+            // Check if the shot hits any invader
+            if (game.invaderPositions[i].x == game.shooterPosition) {
+                // If hit, remove this invader by shifting the remaining invaders and reducing the count
+                for (int j = i + 1; j < game.numInvaders; j++) {
+                    game.invaderPositions[j - 1] = game.invaderPositions[j];
                 }
+                game.numInvaders--;
+                break;
             }
+        }
+    }
 
             pthread_mutex_unlock(&lock);
 

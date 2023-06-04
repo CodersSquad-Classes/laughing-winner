@@ -3,15 +3,21 @@ import Invader from './Invader.jsx';
 import Shooter from './Shooter.jsx';
 import Score from './Score.jsx';
 import Lives from './Lives.jsx';
-import '../Styles/GameBoard.css';
+import '../Styles/GameBoard.css'; // Import your CSS file
+import '../Styles/Shooter.css'; // Import your CSS file
+import '../Styles/Invader.css'; // Import your CSS file
+
 
 function GameBoard() {
     const [numInvaders, setNumInvaders] = useState(10);
-    const [invaderPositions, setInvaderPositions] = useState(Array.from({ length: 10 }, (_, i) => ({x: i, y: 0})));
+    const [invaderPositions, setInvaderPositions] = useState(
+        Array.from({ length: 10 }, (_, i) => ({ x: i, y: 0 }))
+    );
     const [shooterPositionX, setShooterPositionX] = useState(5);
     const [score, setScore] = useState(0);
     const [lives, setLives] = useState(10);
     const [gameOver, setGameOver] = useState(false);
+    const [shooting, setShooting] = useState(false); // New state variable for shooting animation
 
     const socketRef = useRef();
 
@@ -46,16 +52,22 @@ function GameBoard() {
         const handleKeyPress = (event) => {
             switch (event.key) {
                 case 'ArrowLeft':
-                    console.log("Sending left command to server");
+                    console.log('Sending left command to server');
                     socketRef.current.send('left');
                     break;
                 case 'ArrowRight':
-                    console.log("Sending right command to server");
+                    console.log('Sending right command to server');
                     socketRef.current.send('right');
                     break;
                 case ' ':
-                    console.log("Sending shoot command to server");
-                    socketRef.current.send('shoot');
+                    console.log('Sending shoot command to server');
+                    if (!shooting) {
+                        socketRef.current.send('shoot');
+                        setShooting(true);
+                        setTimeout(() => {
+                            setShooting(false);
+                        }, 300); // Adjust the duration of the shooting animation as needed
+                    }
                     break;
             }
         };
@@ -65,7 +77,7 @@ function GameBoard() {
         return () => {
             window.removeEventListener('keydown', handleKeyPress);
         };
-    }, []);
+    }, [shooting]); // Add shooting as a dependency
 
     useEffect(() => {
         if (lives <= 0) {
@@ -81,8 +93,10 @@ function GameBoard() {
             <Score currentScore={score} />
             <Lives remainingLives={lives} />
             <div className="game-field">
-                {invaderPositions.map((pos, index) => <Invader key={index} position={pos} />)}
-                <Shooter style={shooterStyle} />
+                {invaderPositions.map((pos, index) => (
+                    <Invader key={index} position={pos} />
+                ))}
+                <Shooter style={shooterStyle} shooting={shooting} /> {/* Pass the shooting state to the Shooter component */}
             </div>
             {gameOver && <div className="game-over">Game Over</div>}
         </div>
