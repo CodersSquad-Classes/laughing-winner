@@ -10,6 +10,10 @@
 #include <string.h>
 #include "queueStruct.h"
 #include "shared.h" // Include the header file
+#include <time.h> // For random number generation
+
+#define MAX_X 10 // adjust as per your game settings
+#define MAX_Y 10 // adjust as per your game settings
 
 struct GameState game;
 Queue* commandQueue; // Define the variable
@@ -22,6 +26,29 @@ void* websocket_server_thread(void* arg) {
     printf("empezando el server\n");
     start_websocket_server();
     return NULL;
+}
+
+void playerShot() {
+    int nearestInvaderIndex = -1;
+    int max_y = -1;
+
+    // Find the nearest invader in the same x lane as the shooter
+    for (int i = 0; i < game.numInvaders; i++) {
+        if (game.invaderPositions[i].x == game.shooterPosition && game.invaderPositions[i].y > max_y) {
+            max_y = game.invaderPositions[i].y;
+            nearestInvaderIndex = i;
+        }
+    }
+
+    // If an invader was found, remove it
+    if (nearestInvaderIndex != -1) {
+        for (int j = nearestInvaderIndex; j < game.numInvaders - 1; j++) {
+            game.invaderPositions[j] = game.invaderPositions[j + 1];
+        }
+
+        game.numInvaders--;
+        game.score += 100;
+    }
 }
 
 
@@ -47,17 +74,7 @@ void* process_commands(void* arg) {
                 }
             } else if (strncmp(command, "shoot",5) == 0) {
                 // Shoot
-                for (int i = 0; i < game.numInvaders; i++) {
-                    // Check if the shot hits any invader
-                    if (game.invaderPositions[i].x == game.shooterPosition) {
-                        // If hit, remove this invader by shifting the remaining invaders and reducing the count
-                        for (int j = i + 1; j < game.numInvaders; j++) {
-                            game.invaderPositions[j - 1] = game.invaderPositions[j];
-                        }
-                        game.numInvaders--;
-                        break;
-                    }
-                }
+                playerShot();
             }
             sendDataToClient();
             pthread_mutex_unlock(&lock);
@@ -73,27 +90,68 @@ void* process_commands(void* arg) {
     return NULL;
 }
 
-
+typedef struct {
+    int index;
+} invader_args;
 
 void* invader_behavior(void* arg) {
-    while (game.lives > 0) {
+    srand(time(NULL)); // Seed the random number generator
+    sleep(4); // Pause for a while before next update
+    // Each invader needs to know its index
+    int invaderIndex = *((int*)arg);
+    free(arg); // We're done with the argument now
+
+    // Logic for individual invader
+    while (game.lives > 0 && game.invaderPositions[invaderIndex].y < MAX_Y) { // Also stop if invader reaches the end
         pthread_mutex_lock(&lock);
 
+        // Decide randomly if this invader is going to chase the player or move randomly
+        int chasePlayer = rand() % 2; // This will be 0 or 1
+
+        // Calculate new X position
+        int newX = game.invaderPositions[invaderIndex].x;
+        if (chasePlayer && game.lives > 0) { // This invader is going to chase the player
+            if (newX < game.shooterPosition) {
+                newX++;
+            } else if (newX > game.shooterPosition) {
+                newX--;
+            }
+        } else { // This invader is going to move randomly
+            // Randomly change the invader's x position, within the range of the screen
+            int direction = rand() % 2 ? 1 : -1; // Randomly choose a direction, either 1 or -1
+            newX += direction;
+        }
+
+        // Ensure the new position is within the game screen
+        if (newX < 0) newX = 0;
+        if (newX >= MAX_X) newX = MAX_X - 1;
+
+        // Calculate new Y position
+        int newY = game.invaderPositions[invaderIndex].y + 1;
+
+        // Check if the new position is occupied by another invader
+        int positionOccupied = 0;
         for (int i = 0; i < game.numInvaders; i++) {
-            if (game.invaderPositions[i].y < 9) {
-                game.invaderPositions[i].y++;
+            if (i != invaderIndex && game.invaderPositions[i].x == newX && game.invaderPositions[i].y == newY) {
+                positionOccupied = 1;
+                break;
             }
         }
 
-        printf("\n Mandare data\n");
+        // Only update the position if it's not occupied
+        if (!positionOccupied) {
+            game.invaderPositions[invaderIndex].x = newX;
+            game.invaderPositions[invaderIndex].y = newY;
+        }
+
         sendDataToClient();
         pthread_mutex_unlock(&lock);
-
-        sleep(1); // Pause for a while before next update
+        sleep(4); // Pause for a while before next update
     }
 
     return NULL;
 }
+
 
 
 
@@ -131,14 +189,24 @@ int main() {
     // Create command processing thread
     pthread_create(&threads[1], NULL, process_commands, commandQueue);
 
-    // Create threads for invaders
-    /*for (int i = 0; i < game.numInvaders; i++) {
-        int *arg = malloc(sizeof(*arg));
-        *arg = i;
-        pthread_create(&threads[i + 2], NULL, invader_behavior, arg); // Offset by 2 for WebSocket and command threads
-    }*/
-    //pthread_create(&threads[2], NULL, invader_behavior, NULL);
+    pthread_t* invader_threads = malloc(sizeof(pthread_t) * game.numInvaders);
+    invader_args* args = malloc(sizeof(invader_args) * game.numInvaders);
 
+    for (int i = 0; i < game.numInvaders; i++) {
+        int *arg = malloc(sizeof(*arg));
+        if (arg == NULL) {
+            fprintf(stderr, "Couldn't allocate memory for thread arg.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        *arg = i;
+        pthread_create(&threads[i], NULL, invader_behavior, arg);
+    }
+
+    // Join the threads after they have finished
+    for (int i = 0; i < game.numInvaders; i++) {
+        pthread_join(invader_threads[i], NULL);
+    }
 
     // Wait for all threads to finish
     for (int i = 0; i < game.numInvaders + 2; i++) { // Offset by 2 for WebSocket and command threads
@@ -149,6 +217,7 @@ int main() {
     pthread_mutex_destroy(&lock);
     free(game.invaderPositions);
     free(threads);
-
+    free(invader_threads);
+    free(args);
     return 0;
 }
