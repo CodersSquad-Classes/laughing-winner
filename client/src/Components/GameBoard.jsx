@@ -3,49 +3,50 @@ import Invader from './Invader.jsx';
 import Shooter from './Shooter.jsx';
 import Score from './Score.jsx';
 import Lives from './Lives.jsx';
-import '../Styles/GameBoard.css'; // Import your CSS file
-import '../Styles/Shooter.css'; // Import your CSS file
-import '../Styles/Invader.css'; // Import your CSS file
+import GameOver from './GameOver.jsx';
+import '../Styles/GameBoard.css';
+import '../Styles/Shooter.css';
+import '../Styles/Invader.css';
 
-
-function GameBoard() {
-    const [numInvaders, setNumInvaders] = useState(10);
+function GameBoard({ numInvaders }) {
     const [invaderPositions, setInvaderPositions] = useState(
-        Array.from({ length: 10 }, (_, i) => ({ x: i, y: 0 }))
+        Array.from({ length: numInvaders }, (_, i) => ({ x: i, y: 0 }))
     );
     const [shooterPositionX, setShooterPositionX] = useState(5);
     const [score, setScore] = useState(0);
     const [lives, setLives] = useState(10);
     const [gameOver, setGameOver] = useState(false);
     const [shooting, setShooting] = useState(false); // New state variable for shooting animation
-
+    const [invaderAboutToShoot, setInvaderAboutToShoot] = useState(null);
+    const [invadersLeft, setInvadersLeft] = useState(numInvaders)
     const socketRef = useRef();
 
     useEffect(() => {
         socketRef.current = new WebSocket('ws://localhost:9000');
 
         socketRef.current.addEventListener('open', function (event) {
-            socketRef.current.send('start');
+            socketRef.current.send('start ' + numInvaders);
         });
 
         socketRef.current.addEventListener('message', function (event) {
             console.log('Message from server: ', event.data);
             const gameState = JSON.parse(event.data);
-            setNumInvaders(gameState.numInvaders);
             setInvaderPositions(gameState.invaderPositions);
             setShooterPositionX(gameState.shooterPosition);
             setScore(gameState.score);
             setLives(gameState.lives);
+            setInvaderAboutToShoot(gameState.invaderAboutToShoot);
+            setInvadersLeft(gameState.numInvaders);
         });
 
         return () => {
             socketRef.current.close();
         };
-    }, []);
+    }, [numInvaders]);
 
     const shooterStyle = {
         gridColumn: shooterPositionX + 1,
-        gridRow: 10
+        gridRow: 10,
     };
 
     useEffect(() => {
@@ -77,16 +78,14 @@ function GameBoard() {
         return () => {
             window.removeEventListener('keydown', handleKeyPress);
         };
-    }, [shooting]); // Add shooting as a dependency
+    }, [shooting]);
 
     useEffect(() => {
-        if (lives <= 0) {
+        if (lives <= 0 || invadersLeft <= 0) {
+            console.log("GAME OVER")
             setGameOver(true);
         }
-        if (numInvaders <= 0) {
-            setGameOver(true);
-        }
-    }, [lives, numInvaders]);
+    }, [lives, invadersLeft]);
 
     return (
         <div className="game-board">
@@ -94,11 +93,11 @@ function GameBoard() {
             <Lives remainingLives={lives} />
             <div className="game-field">
                 {invaderPositions.map((pos, index) => (
-                    <Invader key={index} position={pos} />
+                    <Invader key={pos.id} position={pos} aboutToShoot={pos.id === invaderAboutToShoot} />
                 ))}
                 <Shooter style={shooterStyle} shooting={shooting} /> {/* Pass the shooting state to the Shooter component */}
             </div>
-            {gameOver && <div className="game-over">Game Over</div>}
+            {gameOver && <GameOver score={score} />}
         </div>
     );
 }

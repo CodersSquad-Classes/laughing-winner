@@ -1,60 +1,53 @@
-Multithreaded Space Invaders Game
-=================================
+# Game Project
 
-Implement a multithreaded version of the arcade video game [Space Invaders](https://en.wikipedia.org/wiki/Space_Invaders). This version will be a
-Computer vs Human game. Each enemy (space invader) will be independent and the number of enemies is configurable. Below you can see the general
-requirements for the space invaders and main shooter interaction.
+This project is a game implemented in C, using WebSocket communication for real-time interaction. It features invaders that the player can shoot down with a shooter controlled through WebSocket commands.
 
-![Space Invaders](space-invaders.png)
+## Dependencies
 
-Technical Requirements
-----------------------
-- The game's layout can be static.
-- The shooter must be controlled by the user.
-- Space Invaders are autonomous entities that will move and shoot in a random way.
-- Space Invaders and shooter should respect the layout limits.
-- Space Invaders number can be configured on game's start.
-- Each invader's behaviour will be implemented as a separated thread.
-- Space Invaders and main shooter threads must use the same map or game layout data structure resource.
-- Display obtained shooter's scores.
-- Main Shooter loses when it has been shooted 10 times.
-- Main Shooter wins the game when it has taken down its enemies in the map.
+Before running this project, make sure you have the following dependencies installed:
 
-General Requirements
---------------------
-- Make sure that you complete the below defined deliverables.
-- Source code dependencies must be clearly documented.
+1. libwebsockets: This is a C library that provides support for WebSocket communication. Make sure you have libwebsockets installed on your system. You can find more information about libwebsockets, including installation instructions, on the official website: [https://libwebsockets.org/](https://libwebsockets.org/)
 
-Deliverables
-------------
-- Source code in each team's member fork.
-- Architecture Document - [ARCHITECTURE.md](ARCHITECTURE.md)
-- Build/Run automation (`Makefile` and documentation - [SPACE_INVADERS.md](SPACE_INVADERS.md))
-- Project's presentation video (5-10 minutes)
+2. OpenSSL: This project uses OpenSSL for cryptographic operations. Make sure you have OpenSSL installed on your system. You can find more information about OpenSSL, including installation instructions, on the official website: [https://www.openssl.org/](https://www.openssl.org/)
+
+3. Node.js and npm: This project includes a frontend component built with React. Make sure you have Node.js and npm (Node Package Manager) installed on your system. You can download Node.js from the official website: [https://nodejs.org/](https://nodejs.org/)
+
+## Compilation
+
+To compile the project, use the following command:
+
+gcc -o game queueStruct.c game.c websocket_server.c -I <path_to_libwebsockets_include> -I <path_to_openssl_include> -L <path_to_libwebsockets_lib> -L <path_to_openssl_lib> -lpthread -lwebsockets
 
 
-Permitted programming languages
--------------------------------
-- Multithreaded core backend
-  - C
-  - Go
-- User Interface (optional)
-  - Any
-  - If it's terminal, output must be human-readable
+Replace `<path_to_libwebsockets_include>`, `<path_to_openssl_include>`, `<path_to_libwebsockets_lib>`, and `<path_to_openssl_lib>` with the actual paths where the header files and libraries are located on your system.
+
+## Frontend Setup
+
+The frontend component of this project is built with React. To set up the frontend, navigate to the `frontend` directory and run the following command:
+
+npm install
 
 
-Grading Policy
---------------
-| Concept                      | Grade |
-|------------------------------|-------|
-| Architecture Document        | 20%   |
-| Multithreaded implementation | 30%   |
-| Build Automation             | 20%   |
-| Coding best practices        | 10%   |
-| Presentation                 | 20%   |
-| TOTAL                        | 100%  |
+This will install all the necessary dependencies for the React app.
 
-- **Free Lab Bonus**
+## Running the Game
 
-  You can get an extra bonus if you implement an Artificial Intelligence algorithm in space invaders behaviour
-  for finding the main shooter location, trace the route and follow it.
+After compiling the project and setting up the frontend, you can run the game by executing the generated `game` executable. Make sure to start the WebSocket server first before launching the frontend.
+
+To start the WebSocket server, run:
+
+./game
+
+
+Next, navigate to the `frontend` directory and run:
+
+npm start
+
+
+This will start the development server for the React app. You can access the game in a web browser by visiting [http://localhost:3000/](http://localhost:3000/).
+
+## Game Instructions
+
+- Use the left and right arrow keys to move the shooter.
+- Press the spacebar to shoot at the invaders.
+- The goal is to shoot down all the invaders before they reach the bottom of the screen.

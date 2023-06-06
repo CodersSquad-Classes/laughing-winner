@@ -3,6 +3,6 @@
 
 #include <pthread.h>
 
-extern pthread_mutex_t lock;
+extern pthread_mutex_t lock_game;
 
 #endif // GAME_H

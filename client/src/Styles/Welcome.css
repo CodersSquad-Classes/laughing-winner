@@ -1,0 +1,38 @@
+.welcome-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #333333;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    z-index: 10;
+}
+
+.welcome-heading {
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.welcome-label {
+    color: #fff;
+}
+
+.welcome-input {
+    margin-bottom: 10px;
+}
+
+.welcome-button {
+    padding: 10px 20px;
+    background: #333;
+    color: #2a1f1f;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.welcome-button:hover {
+    background: #666;
+}

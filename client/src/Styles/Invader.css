@@ -6,6 +6,14 @@
     animation: invaderAnimation 1s linear infinite;
 }
 
+.about-to-shoot {
+    /* Change color */
+    background-color: yellow;
+
+    /* Add a pulsating animation */
+    animation: pulsate 0.5s ease-out infinite;
+}
+
 @keyframes invaderAnimation {
     0% {
         transform: translateX(0);
@@ -15,5 +23,17 @@
     }
     100% {
         transform: translateX(0);
+    }
+}
+
+@keyframes pulsate {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
     }
 }
